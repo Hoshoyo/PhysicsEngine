@@ -13,36 +13,18 @@ vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction);
 
 void DEBUG_gjk()
 {
-	BoundingShape b1;
-	BoundingShape b2;
-	b1.vertices = (vec3*)malloc(3 * sizeof(vec3));
-	b2.vertices = (vec3*)malloc(4 * sizeof(vec3));
-	vec3 b1_verts[3] = {
-		{4.0f, 11.0f, 0.0f},
-		{9.0f, 9.0f, 0.0f},
-		{4.0f, 5.0f, 0.0f}
-	};
-	vec3 b2_verts[4] = {
-		{5.0f, 5.0f, 0.0f},
-		{7.0f, 3.0f, 0.0f},
-		{12.0f, 7.0f, 0.0f},
-		{10.0f, 2.0f, 0.0f}
-	};
-	memcpy(b1.vertices, b1_verts, sizeof(b1_verts));
-	memcpy(b2.vertices, b2_verts, sizeof(b2_verts));
-	b1.num_vertices = 3;
-	b2.num_vertices = 4;
-	
-	//vec3 max = gjk_support(&b1, &b2, vec3(1.0f, 1.0f, 0.0f));
-	bool collides = gjk_collides(&b1, &b2);
-	int x = 1;
+}
+
+void transform_shape(BoundingShape* base, BoundingShape* b, mat4& m)
+{
+	for (int i = 0; i < b->num_vertices; ++i) {
+		b->vertices[i] = m * base->vertices[i];
+	}
 }
 
 vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction) 
 {
-	float min = -std::numeric_limits<float>::max();
-	unsigned int mm = *(unsigned int*)&min;
-	float max = reinterpret_cast<float>(0xff7fffff);
+	float max = -10000.0f;
 	int index = 0;
 	for (int i = 0; i < b1->num_vertices; ++i)
 	{
@@ -71,9 +53,13 @@ vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction)
 }
 
 struct SupportList {
-	vec3 list[1024];
+	vec3 list[4];
 	int current_index;
 	
+	SupportList() {
+		current_index = 0;
+	}
+
 	void add(vec3 v) {
 		list[current_index] = v;
 		current_index++;
@@ -184,6 +170,7 @@ bool gjk_simplex(vec3& direction)
 
 bool gjk_collides(BoundingShape* b1, BoundingShape* b2)
 {
+	support_list.clear();
 	vec3 search_direction(1.0f, 0.0f, 0.0f);
 	vec3 support = gjk_support(b1, b2, search_direction);
 	support_list.add(support);
@@ -192,7 +179,8 @@ bool gjk_collides(BoundingShape* b1, BoundingShape* b2)
 
 	while (true) {
 		vec3 a = gjk_support(b1, b2, opposite_direction);
-		if (vec3::dot(a, opposite_direction) < 0) {
+		float dotval = vec3::dot(a, opposite_direction);
+		if (dotval < 0) {
 			return false;	// there is no intersection
 		}
 		support_list.add(a);

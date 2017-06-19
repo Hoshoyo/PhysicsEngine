@@ -96,7 +96,7 @@
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)PhysicsEngine\bin\$(Platform)\$(Configuration);lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)PhysicsEngine\bin\$(Platform)\$(Configuration);lib;bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;shell32.lib;opengl32.lib;PhysicsEngine.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

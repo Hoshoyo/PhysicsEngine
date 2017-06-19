@@ -2,7 +2,7 @@
 #include "util.h"
 
 internal const char vert_shader[] =
-"#version 450 core\n"
+"#version 330\n"
 "in vec3 pos_coord;\n"
 "in vec3 normal_coord;\n"
 "in vec2 tex_coord;\n"
@@ -23,19 +23,19 @@ internal const char vert_shader[] =
 "}\n";
 
 internal const char frag_shader[] =
-"#version 450 core\n"
+"#version 330\n"
 "out vec4 color;\n"
 "in vec2 uv;\n"
 "in vec3 normals;\n"
 "in vec3 tolight;\n"
 "uniform sampler2D tex_sampler;\n"
-"uniform vec3 vertex_color;\n"
+"uniform vec4 vertex_color;\n"
 "void main(){\n"
 "color = vec4(normalize(normals), 1.0);\n"
 "float factor = dot(normalize(normals), normalize(tolight));\n"
 "vec3 diffuse = max(factor * vec3(1.0, 1.0, 1.0), 0.2);\n"
 
-"color = vec4(1.0) * vec4(diffuse, 1.0);\n"
+"color = vertex_color;\n//vec4(1.0) * vec4(diffuse, 1.0);\n"
 "}\n";
 
 internal GLuint load_shader(const char* vert_shader, const char* frag_shader, GLint vert_length, GLint frag_length)

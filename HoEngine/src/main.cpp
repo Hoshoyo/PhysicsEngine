@@ -103,7 +103,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
 	init_opengl(win_state.window_handle, &win_state.device_context, &win_state.rendering_context, 3, 1);
 
 	init_application();
-	DEBUG_app();
 
 	wglSwapIntervalEXT(1);		// Enable Vsync
 

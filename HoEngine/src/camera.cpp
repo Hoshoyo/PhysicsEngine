@@ -85,7 +85,7 @@ void mouse_move_event(Camera* camera, int valuex, int valuey)
 
 void input_camera(Camera* camera)
 {
-#define CAMSPEED 2.80f
+#define CAMSPEED 7.80f
 #define CAMTURNSPEED 3.00f
 
 	if (keyboard_state.key['W']) {
