@@ -24,6 +24,7 @@ struct IndexedModel3D {
 	bool is_colliding;
 
 	vec3 position;
+	vec3 rotation;
 	mat4 model_matrix;
 
 	BoundingShape bshape;

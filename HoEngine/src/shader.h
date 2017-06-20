@@ -3,9 +3,9 @@
 
 internal const char vert_shader[] =
 "#version 330\n"
-"in vec3 pos_coord;\n"
-"in vec3 normal_coord;\n"
-"in vec2 tex_coord;\n"
+"layout(location=0) in vec3 pos_coord;\n"
+"layout(location=1) in vec3 normal_coord;\n"
+"layout(location=2) in vec2 tex_coord;\n"
 "out vec2 uv;\n"
 "out vec3 normals;\n"
 "out vec3 tolight;\n"
@@ -17,7 +17,7 @@ internal const char vert_shader[] =
 "uv = tex_coord;\n"
 "vec3 world_pos = (model_matrix * vec4(pos_coord, 1.0)).xyz;\n"
 "normals = vec3(model_matrix * vec4(normal_coord, 0.0));\n"
-"tolight = vec3(-10, 10, -10) - world_pos;\n"
+"tolight = vec3(5.0, 5.0, 5.0) - world_pos;\n"
 
 "gl_Position = persp_matrix * view_matrix * model_matrix * vec4(pos_coord, 1.0);\n"
 "}\n";
@@ -35,7 +35,8 @@ internal const char frag_shader[] =
 "float factor = dot(normalize(normals), normalize(tolight));\n"
 "vec3 diffuse = max(factor * vec3(1.0, 1.0, 1.0), 0.2);\n"
 
-"color = vertex_color;\n//vec4(1.0) * vec4(diffuse, 1.0);\n"
+"//color = vec4(normalize(normals), 1.0);\n"
+"color = vertex_color * vec4(diffuse, 1.0);\n"
 "}\n";
 
 internal GLuint load_shader(const char* vert_shader, const char* frag_shader, GLint vert_length, GLint frag_length)

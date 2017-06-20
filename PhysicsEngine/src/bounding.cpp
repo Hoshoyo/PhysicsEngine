@@ -1,7 +1,10 @@
 #include "..\include\bounding.h"
 #include <malloc.h>
 #include <memory.h>
-#include <limits>
+#include <float.h>
+
+__declspec(dllexport) float global_distance = 0.0f;
+__declspec(dllexport) void(*render_vec)(vec3 v, vec3 pos) = 0;
 
 bool collides(BoundingShape* b1, BoundingShape* b2)
 {
@@ -24,7 +27,7 @@ void transform_shape(BoundingShape* base, BoundingShape* b, mat4& m)
 
 vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction) 
 {
-	float max = -10000.0f;
+	float max = -FLT_MAX;
 	int index = 0;
 	for (int i = 0; i < b1->num_vertices; ++i)
 	{
@@ -36,7 +39,7 @@ vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction)
 	}
 	int b1_index = index;
 
-	max = -10000.0f;
+	max = -FLT_MAX;
 	index = 0;
 	for (int i = 0; i < b2->num_vertices; ++i)
 	{
@@ -71,7 +74,7 @@ struct SupportList {
 };
 
 SupportList support_list;
-
+#define GJK_3D
 bool gjk_simplex(vec3& direction)
 {
 	int num_entries = support_list.current_index;
@@ -165,6 +168,55 @@ bool gjk_simplex(vec3& direction)
 			}
 		}
 	}
+#ifdef GJK_3D
+	else if (num_entries == 4) {
+		vec3 A = support_list.list[3];
+		vec3 B = support_list.list[2];
+		vec3 C = support_list.list[1];
+		vec3 D = support_list.list[0];
+
+		vec3 AO = -A;
+		vec3 AB = B - A;
+		vec3 AC = C - A;
+		vec3 AD = D - A;
+
+		vec3 ABC = vec3::cross(AB, AC);
+
+		if (vec3::dot(ABC, AO) > 0) {
+			// in front of ABC
+			support_list.list[0] = C;
+			support_list.list[1] = B;
+			support_list.list[2] = A;
+			support_list.current_index--;
+			direction = ABC;
+			return false;
+		}
+
+		vec3 ADB = vec3::cross(AD, AB);
+		if (vec3::dot(ADB, AO) > 0) {
+			// in front of ADB
+			support_list.list[0] = B;
+			support_list.list[1] = D;
+			support_list.list[2] = A;
+			support_list.current_index--;
+			direction = ADB;
+			return false;
+		}
+
+		vec3 ACD = vec3::cross(AC, AD);
+		if (vec3::dot(ACD, AO) > 0) {
+			// in front of ACD
+			support_list.list[0] = D;
+			support_list.list[1] = C;
+			support_list.list[2] = A;
+			support_list.current_index--;
+			direction = ACD;
+			return false;
+		}
+
+		return true;	// inside the tetrahedron
+	}
+#endif
 	return false;
 }
 

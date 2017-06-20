@@ -29,73 +29,89 @@ struct GameState {
 };
 
 static GameState global_game_state = {};
+__declspec(dllimport) float global_distance;
+__declspec(dllimport) void(*render_vec)(vec3 v, vec3 pos);
 
+#define NUMV1 5
+#define NUMV2 4
 void DEBUG_app(IndexedModel3D* model1, IndexedModel3D* model2)
 {
-	vec3 b1_verts[4] = {
+
+	vec3 b1_verts[NUMV1] = {
 		{ 5.0f, 7.0f, 0.0f },
 		{ 7.0f, 3.0f, 0.0f },
+		{ 10.0f, 2.0f, 0.0f },
 		{ 12.0f, 7.0f, 0.0f },
-		{ 10.0f, 2.0f, 0.0f }
+		{ 5.0f, 5.0f, -10.0f}
 	};
-	vec3 b2_verts[3] = {
+	vec3 b2_verts[NUMV2] = {
 		{ 9.0f, 9.0f, 0.0f },
+		{ 4.0f, 11.0f, 0.0f },
 		{ 4.0f, 5.0f, 0.0f },
-		{ 4.0f, 11.0f, 0.0f }
+		{ 5.0f, 5.0f, -10.0f}
 	};
 
-	model1->bshape.vertices = (vec3*)malloc(4 * sizeof(vec3));
-	model2->bshape.vertices = (vec3*)malloc(3 * sizeof(vec3));
+	model1->bshape.vertices = (vec3*)malloc(NUMV1 * sizeof(vec3));
+	model2->bshape.vertices = (vec3*)malloc(NUMV2 * sizeof(vec3));
 	memcpy(model1->bshape.vertices, b1_verts, sizeof(b1_verts));
 	memcpy(model2->bshape.vertices, b2_verts, sizeof(b2_verts));
-	model1->bshape.num_vertices = 4;
-	model2->bshape.num_vertices = 3;
+	model1->bshape.num_vertices = NUMV1;
+	model2->bshape.num_vertices = NUMV2;
 
-	model1->bshape_temp.vertices = (vec3*)malloc(4 * sizeof(vec3));
-	model2->bshape_temp.vertices = (vec3*)malloc(3 * sizeof(vec3));
+	model1->bshape_temp.vertices = (vec3*)malloc(NUMV1 * sizeof(vec3));
+	model2->bshape_temp.vertices = (vec3*)malloc(NUMV2 * sizeof(vec3));
 	memcpy(model1->bshape_temp.vertices, b1_verts, sizeof(b1_verts));
 	memcpy(model2->bshape_temp.vertices, b2_verts, sizeof(b2_verts));
-	model1->bshape_temp.num_vertices = 4;
-	model2->bshape_temp.num_vertices = 3;
+	model1->bshape_temp.num_vertices = NUMV1;
+	model2->bshape_temp.num_vertices = NUMV2;
 }
 
 void load_model2(IndexedModel3D* m) {
 	mat4::identity(m->model_matrix);
+	m->position = vec3(0.0f, 0.0f, 0.0f);
+	m->rotation = vec3(0.0f, 0.0f, 0.0f);
 	m->is_colliding = false;
-	m->vertices = (Vertex3D*)malloc(3 * sizeof(Vertex3D));
-	m->indices = (u16*)malloc(3 * sizeof(u16));
-	m->num_indices = 3;
-	m->num_vertices = 3;
-	u16 inds[] = { 0, 1, 2 };
+	m->vertices = (Vertex3D*)malloc(4 * sizeof(Vertex3D));
+	m->indices = (u16*)malloc(12 * sizeof(u16));
+	m->num_indices = 12;
+	m->num_vertices = 4;
+	u16 inds[] = { 0, 1, 2, 0, 2, 3, 0, 2, 3, 2, 1, 3 };
+
+	vec3 n1 = vec3::cross(vec3(9, 9, 0) - vec3(4, 5, 0), vec3(4, 11, 0) - vec3(4, 5, 0));
 
 	Vertex3D verts[] = {
-		{ { 4.0f, 11.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
-		{ { 4.0f, 5.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 0.0f } },
-		{ { 9.0f, 9.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } }
+		{ { 4.0f, 11.0f, 0.0f },{ n1.x, n1.y, n1.z},{ 0.0f, 0.0f } },
+		{ { 4.0f, 5.0f, 0.0f },{ n1.x, n1.y, n1.z },{ 1.0f, 0.0f } },
+		{ { 9.0f, 9.0f, 0.0f },{ n1.x, n1.y, n1.z },{ 0.0f, 1.0f } },
+		{ { 5.0f, 5.0f, -10.0f },{ 0.0f, -1.0f, 1.0f },{ 0.0f, 1.0f } },
 	};
 
-	memcpy(m->vertices, verts, 3 * sizeof(Vertex3D));
-	memcpy(m->indices, inds, 3 * sizeof(u16));
+	memcpy(m->vertices, verts, 4 * sizeof(Vertex3D));
+	memcpy(m->indices, inds, 12 * sizeof(u16));
 }
 
 void load_model1(IndexedModel3D* m) {
 	mat4::identity(m->model_matrix);
+	m->position = vec3(0.0f, 0.0f, 0.0f);
+	m->rotation = vec3(0.0f, 0.0f, 0.0f);
 	m->is_colliding = false;
-	m->vertices = (Vertex3D*)malloc(4 * sizeof(Vertex3D));
-	m->indices = (u16*)malloc(6 * sizeof(u16));
-	m->num_indices = 6;
-	m->num_vertices = 4;
-	u16 inds[] = { 0, 1, 2, 2, 3, 0 };
+	m->vertices = (Vertex3D*)malloc(5 * sizeof(Vertex3D));
+	m->indices = (u16*)malloc(18 * sizeof(u16));
+	m->num_indices = 18;
+	m->num_vertices = 5;
+	u16 inds[] = { 0, 1, 2, 2, 3, 0, 
+				0, 4, 1, 0, 3, 4, 3, 2, 4, 2, 1, 4};
 
 	Vertex3D verts[] = {
 		{ { 5.0f, 7.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 0.0f } },
 		{ { 7.0f, 3.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 0.0f } },
 		{ { 10.0f, 2.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
-		{ { 12.0f, 7.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } }
+		{ { 12.0f, 7.0f, 0.0f },{ 0.0f, 0.0f, 1.0f },{ 1.0f, 1.0f } },
+		{ { 5.0f, 5.0f, -10.0f },{ 0.0f, 0.0f, 1.0f },{ 0.0f, 1.0f } },
 	};
 
-	memcpy(m->vertices, verts, 4 * sizeof(Vertex3D));
-	memcpy(m->indices, inds, 6 * sizeof(u16));
+	memcpy(m->vertices, verts, 5 * sizeof(Vertex3D));
+	memcpy(m->indices, inds, 18 * sizeof(u16));
 }
 
 void init_object(IndexedModel3D* m) {
@@ -146,9 +162,21 @@ void init_object(Model3D* m) {
 	glVertexAttribPointer(tex_coord_attrib_loc, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex3D), (void*)&((Vertex3D*)0)->tex);
 }
 
+void render_vector(vec3 vec, vec3 position)
+{
+	vec4 black(0, 0, 0, 1);
+	glUniform4fv(glGetUniformLocation(global_game_state.shader, "vertex_color"), 1, (float*)&black);
+	glBegin(GL_LINES);
+	glVertex3f(position.x, position.y, position.z);
+	glVertex3f(vec.x + position.x, vec.y + position.y, vec.z + position.z);
+	glEnd();
+}
+
 void init_application()
 {
+	render_vec = render_vector;
 	init_camera(&global_game_state.camera, (float)win_state.win_width / win_state.win_height, 45.0f, 0.5f, 100.0f);
+	global_game_state.camera.set_cam_position(vec3(5.0f, 5.0f, 15.0f));
 	global_game_state.shader = load_shader(vert_shader, frag_shader, sizeof(vert_shader) - 1, sizeof(frag_shader) - 1);
 
 	load_model1(&global_game_state.indexed_object1);
@@ -207,20 +235,41 @@ void render_object(Model3D* model)
 
 void input()
 {
+	float velocity = 0.1f;
+	if (keyboard_state.key[VK_SHIFT]) {
+		velocity = 0.005f;
+	}
 	if (keyboard_state.key[VK_LEFT]) {
-		global_game_state.indexed_object1.position.x -= 0.1f;
+		global_game_state.indexed_object1.position.x -= velocity;
 	}
 	if (keyboard_state.key[VK_RIGHT]) {
-		global_game_state.indexed_object1.position.x += 0.1f;
+		global_game_state.indexed_object1.position.x += velocity;
 	}
 	if (keyboard_state.key[VK_UP]) {
-		global_game_state.indexed_object1.position.y += 0.1f;
+		global_game_state.indexed_object1.position.y += velocity;
 	}
 	if (keyboard_state.key[VK_DOWN]) {
-		global_game_state.indexed_object1.position.y -= 0.1f;
+		global_game_state.indexed_object1.position.y -= velocity;
 	}
+
+	if (keyboard_state.key['X']) {
+		global_game_state.indexed_object1.rotation.x += velocity * 5.0f;
+	}
+	if (keyboard_state.key['Y']) {
+		global_game_state.indexed_object1.rotation.y += velocity * 5.0f;
+	}
+	if (keyboard_state.key['Z']) {
+		global_game_state.indexed_object1.rotation.z += velocity * 5.0f;
+	}
+
+	vec3 rot = global_game_state.indexed_object1.rotation;
 	vec3 pos = global_game_state.indexed_object1.position;
-	global_game_state.indexed_object1.model_matrix = mat4::translate(pos);
+	mat4 rotx = mat4::rotate(vec3(1, 0, 0), rot.x);
+	mat4 roty = mat4::rotate(vec3(0, 1, 0), rot.y);
+	mat4 rotz = mat4::rotate(vec3(0, 0, 1), rot.z);
+	mat4 rotation_matrix = rotx * roty * rotz;
+
+	global_game_state.indexed_object1.model_matrix = mat4::translate(pos) * rotation_matrix;
 }
 
 void update_and_render()
@@ -228,6 +277,12 @@ void update_and_render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(global_game_state.shader);
+
+	vec3 A(1, 0, 0);
+	vec3 C(-1, 0, 0);
+	vec3 B(0, 1, 0);
+
+	vec3 res = vec3::cross(C - A, B - A);
 	
 	input_camera(&global_game_state.camera);
 	input();

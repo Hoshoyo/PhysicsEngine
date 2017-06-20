@@ -71,7 +71,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)HoEngine\bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>bin\$(Platform)\$(Configuration)\intermediaries</IntDir>
+    <IntDir>$(ProjectDir)bin\$(Platform)\$(Configuration)\intermediaries</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -85,8 +85,12 @@ void mouse_move_event(Camera* camera, int valuex, int valuey)
 
 void input_camera(Camera* camera)
 {
-#define CAMSPEED 7.80f
-#define CAMTURNSPEED 3.00f
+	float CAMSPEED = 15.8f;
+	float CAMTURNSPEED = 7.0f;
+
+	if (keyboard_state.key[VK_SHIFT]) {
+		CAMSPEED = 1.0f;
+	}
 
 	if (keyboard_state.key['W']) {
 		camera->current_speed = CAMSPEED;
