@@ -1,3 +1,4 @@
+//#include "util.h"
 
 struct Token {
 	u8* value;
@@ -19,7 +20,7 @@ internal bool str_equal(const char* str1, int str1_size, const char* str2, int s
 	}
 	return false;
 }
-
+/*
 void load_model(Model3D* model, u8* filename)
 {
 	s64 fsize = 0;
@@ -110,4 +111,157 @@ void load_model(Model3D* model, u8* filename)
 		}
 	}
 	model->num_vertices = num_vertices * 3;
+}
+*/
+
+/*
+struct Vertex3D {
+float pos[3];
+float normal[3];
+float tex[2];
+};
+*/
+float parse_float(u8** at_in) {
+	u8* at = *at_in;
+	bool floating_point = false;
+	int i = 0;
+	int length = 0;
+	do {
+		++i;
+		length++;
+		if (at[i] == '.' && !floating_point) {
+			floating_point = true;
+			++i;
+			length++;
+		}
+	} while (at[i] && (is_number(at[i])));
+	float result = strtof((char*)at, (char**)(at + length));
+	at += length;
+	return result;
+}
+
+int parse_int(u8** at_in)
+{
+	u8* at = *at_in;
+	int length = 0;
+	while (is_number(*at)) length++;
+	return strtol((char*)at, (char**)(at + length), 10);
+}
+
+void goto_next_line(u8** at_in) {
+	u8* at = *at_in;
+	while (*at != '\n') at++;
+}
+
+void eat_whitespace(u8** at_in)
+{
+	u8* at = *at_in;
+	while (is_white_space(*at)) {
+		at++;
+	}
+}
+
+void parse_normal(u8** at, Vertex3D* vertex_data, int index)
+{
+	float x, y, z;
+
+	eat_whitespace(at);
+	x = parse_float(at);
+	eat_whitespace(at);
+	y = parse_float(at);
+	eat_whitespace(at);
+	z = parse_float(at);
+	goto_next_line;
+
+	(vertex_data + index)->normal[0] = x;
+	(vertex_data + index)->normal[1] = y;
+	(vertex_data + index)->normal[2] = z;
+}
+
+void parse_vertex(u8** at, Vertex3D* vertex_data, int index)
+{
+	float x, y, z;
+
+	eat_whitespace(at);
+	x = parse_float(at);
+	eat_whitespace(at);
+	y = parse_float(at);
+	eat_whitespace(at);
+	z = parse_float(at);
+	goto_next_line;
+
+	(vertex_data + index)->pos[0] = x;
+	(vertex_data + index)->pos[1] = y;
+	(vertex_data + index)->pos[2] = z;
+}
+
+void parse_texture_coord(u8** at, Vertex3D* vertex_data, int index)
+{
+	float x, y;
+
+	eat_whitespace(at);
+	x = parse_float(at);
+	eat_whitespace(at);
+	y = parse_float(at);
+	goto_next_line(at);
+
+	(vertex_data + index)->tex[0] = x;
+	(vertex_data + index)->tex[1] = y;
+}
+
+struct IndexData {
+	int vertex;
+	int texcoord;
+	int normal;
+};
+
+void parse_triangle(u8** at, IndexData* index_data) {
+	int x, y, z;
+	int vindex = 0, tindex, nindex;
+	eat_whitespace(at);
+	vindex = parse_int(at); at++;
+	tindex = parse_int(at); at++;
+	nindex = parse_int(at); at++;
+
+	index_data->vertex = vindex;
+}
+
+void load_objfile(char* filename) 
+{
+	s64 size = 0;
+	u8* data = read_entire_file((u8*)filename, &size);
+	if (!data) {
+		char buffer[512] = { 0 };
+		sprintf(buffer, "could not read file %s\n", filename);
+		error_fatal("File IO error.\n", buffer);
+	}
+
+	Vertex3D* vertex_data = (Vertex3D*)malloc(size * sizeof(Vertex3D));
+	IndexData* index_data = (IndexData*)malloc(size * sizeof(IndexData));
+
+	int position_index = 0;
+	int texcoord_index = 0;
+	int normal_index = 0;
+	int faces_index = 0;
+
+	while (data != 0)
+	{
+		//getline(objFile, line);
+		if (data[0] == 'v' && data[1] == ' ') {
+			parse_vertex(&data, vertex_data, position_index);
+			position_index++;
+		} else if (data[0] == 'v' && data[1] == 't') {
+			parse_texture_coord(&data, vertex_data, texcoord_index);
+			texcoord_index++;
+		} else if (data[0] == 'v' && data[1] == 'n') {
+			parse_normal(&data, vertex_data, normal_index);
+		} else if (data[0] == 'f' && data[1] == ' ') {
+			parse_triangle(&data, index_data);
+		} else {
+			while (*data != '\n') {
+				if (*data == 0) break;
+				data++;
+			}
+		}
+	}	
 }

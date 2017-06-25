@@ -38,7 +38,7 @@ internal bool is_white_space(char str)
 {
 	if (str == ' ' ||
 		str == '\t' ||
-		str == '\n' ||
+		//str == '\n' ||
 		str == '\v' ||
 		str == '\f' ||
 		str == '\r')

@@ -140,7 +140,7 @@ void init_object(IndexedModel3D* m) {
 }
 
 void init_object(Model3D* m) {
-	load_model(&global_game_state.object, (u8*)"res/cube.in");
+	//load_model(&global_game_state.object, (u8*)"res/cube.in");
 	m->winding_order = GL_CCW;
 
 	glGenVertexArrays(1, &m->vao);
@@ -174,6 +174,8 @@ void render_vector(vec3 vec, vec3 position)
 
 void init_application()
 {
+	//load_objfile("")
+
 	render_vec = render_vector;
 	init_camera(&global_game_state.camera, (float)win_state.win_width / win_state.win_height, 45.0f, 0.5f, 100.0f);
 	global_game_state.camera.set_cam_position(vec3(5.0f, 5.0f, 15.0f));
