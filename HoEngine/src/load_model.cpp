@@ -121,43 +121,46 @@ float normal[3];
 float tex[2];
 };
 */
-float parse_float(u8** at_in) {
-	u8* at = *at_in;
+float parse_float(u8** at) {
 	bool floating_point = false;
 	int i = 0;
 	int length = 0;
 	do {
 		++i;
 		length++;
-		if (at[i] == '.' && !floating_point) {
+		if ((*at)[i] == '.' && !floating_point) {
 			floating_point = true;
 			++i;
 			length++;
 		}
-	} while (at[i] && (is_number(at[i])));
-	float result = strtof((char*)at, (char**)(at + length));
-	at += length;
+	} while ((*at)[i] && (is_number((*at)[i])));
+	char buffer[128] = { 0 };
+	memcpy(buffer, (void*)*at, length);
+	float result = atof(buffer);
+	*at += length;
 	return result;
 }
 
-int parse_int(u8** at_in)
+int parse_int(u8** at)
 {
-	u8* at = *at_in;
 	int length = 0;
-	while (is_number(*at)) length++;
-	return strtol((char*)at, (char**)(at + length), 10);
+	while (is_number((*at)[length])) {
+		length++;
+	}
+	char buffer[128] = { 0 };
+	memcpy(buffer, (void*)*at, length);
+	*at += length;
+	return atoi(buffer);
 }
 
-void goto_next_line(u8** at_in) {
-	u8* at = *at_in;
-	while (*at != '\n') at++;
+void goto_next_line(u8** at) {
+	while (**at != '\n') (*at)++;
 }
 
-void eat_whitespace(u8** at_in)
+void eat_whitespace(u8** at)
 {
-	u8* at = *at_in;
-	while (is_white_space(*at)) {
-		at++;
+	while (is_white_space(**at)) {
+		(*at)++;
 	}
 }
 
@@ -215,21 +218,28 @@ struct IndexData {
 	int normal;
 };
 
-void parse_triangle(u8** at, IndexData* index_data) {
+void parse_triangle(u8** at, IndexData* index_data, int index) {
 	int x, y, z;
 	int vindex = 0, tindex, nindex;
 	eat_whitespace(at);
-	vindex = parse_int(at); at++;
-	tindex = parse_int(at); at++;
-	nindex = parse_int(at); at++;
+	vindex = parse_int(at); (*at)++;
+	tindex = parse_int(at); (*at)++;
+	nindex = parse_int(at); (*at)++;
 
-	index_data->vertex = vindex;
+	(index_data + index)->vertex = vindex;
+	(index_data + index)->texcoord = tindex;
+	(index_data + index)->normal = nindex;
+
+	eat_whitespace(at);
+
+
 }
 
 void load_objfile(char* filename) 
 {
 	s64 size = 0;
 	u8* data = read_entire_file((u8*)filename, &size);
+	u8* start_data = data;
 	if (!data) {
 		char buffer[512] = { 0 };
 		sprintf(buffer, "could not read file %s\n", filename);
@@ -248,20 +258,29 @@ void load_objfile(char* filename)
 	{
 		//getline(objFile, line);
 		if (data[0] == 'v' && data[1] == ' ') {
+			data++;
 			parse_vertex(&data, vertex_data, position_index);
 			position_index++;
 		} else if (data[0] == 'v' && data[1] == 't') {
+			data += 2;
 			parse_texture_coord(&data, vertex_data, texcoord_index);
 			texcoord_index++;
 		} else if (data[0] == 'v' && data[1] == 'n') {
+			data += 2;
 			parse_normal(&data, vertex_data, normal_index);
+			normal_index++;
 		} else if (data[0] == 'f' && data[1] == ' ') {
-			parse_triangle(&data, index_data);
+			data++;
+			parse_triangle(&data, index_data, faces_index);
+			faces_index++;
 		} else {
 			while (*data != '\n') {
 				if (*data == 0) break;
 				data++;
 			}
+			if (*data == 0) break;
+			data++;
 		}
-	}	
+	}
+	int x = 0;
 }

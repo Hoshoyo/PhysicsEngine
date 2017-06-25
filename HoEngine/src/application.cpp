@@ -174,7 +174,7 @@ void render_vector(vec3 vec, vec3 position)
 
 void init_application()
 {
-	//load_objfile("")
+	load_objfile("res/curemodel.obj");
 
 	render_vec = render_vector;
 	init_camera(&global_game_state.camera, (float)win_state.win_width / win_state.win_height, 45.0f, 0.5f, 100.0f);
