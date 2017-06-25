@@ -218,24 +218,30 @@ struct IndexData {
 	int normal;
 };
 
-void parse_triangle(u8** at, IndexData* index_data, int index) {
+void parse_triangle(u8** at, IndexData* index_data, int *index) {
 	int x, y, z;
-	int vindex = 0, tindex, nindex;
-	eat_whitespace(at);
-	vindex = parse_int(at); (*at)++;
-	tindex = parse_int(at); (*at)++;
-	nindex = parse_int(at); (*at)++;
-
-	(index_data + index)->vertex = vindex;
-	(index_data + index)->texcoord = tindex;
-	(index_data + index)->normal = nindex;
-
+	int vindex = 0, tindex = 0, nindex = 0;
 	eat_whitespace(at);
 
+	for (int i = 0; i < 3; ++i)
+	{
+		vindex = parse_int(at); (*at)++;
+		tindex = parse_int(at); (*at)++;
+		nindex = parse_int(at); (*at)++;
+
+		(index_data + *index)->vertex = vindex - 1;
+		(index_data + *index)->texcoord = tindex - 1;
+		(index_data + *index)->normal = nindex - 1;
+
+		eat_whitespace(at);
+		(*index)++;
+	}
 
 }
 
-void load_objfile(char* filename) 
+void to_index_model(IndexedModel3D* model, Vertex3D* verts, IndexData* indices, int num_pos, int num_texcoord, int num_normal, int num_indices);
+
+void load_objfile(char* filename, IndexedModel3D* model) 
 {
 	s64 size = 0;
 	u8* data = read_entire_file((u8*)filename, &size);
@@ -271,8 +277,7 @@ void load_objfile(char* filename)
 			normal_index++;
 		} else if (data[0] == 'f' && data[1] == ' ') {
 			data++;
-			parse_triangle(&data, index_data, faces_index);
-			faces_index++;
+			parse_triangle(&data, index_data, &faces_index);
 		} else {
 			while (*data != '\n') {
 				if (*data == 0) break;
@@ -282,5 +287,51 @@ void load_objfile(char* filename)
 			data++;
 		}
 	}
-	int x = 0;
+	model->bshape.num_vertices = position_index;
+	model->bshape.vertices = (vec3*)malloc(model->bshape.num_vertices * sizeof(vec3));
+	model->bshape_temp.num_vertices = position_index;
+	model->bshape_temp.vertices = (vec3*)malloc(model->bshape.num_vertices * sizeof(vec3));
+
+	for (int i = 0; i < model->bshape.num_vertices; ++i) {
+		model->bshape.vertices[i] = vec3(vertex_data[i].pos[0], vertex_data[i].pos[1], vertex_data[i].pos[2]);
+	}
+	memcpy(model->bshape_temp.vertices, model->bshape.vertices, model->bshape.num_vertices * sizeof(vec3));
+
+	to_index_model(model, vertex_data, index_data, position_index, texcoord_index, normal_index, faces_index);
+}
+
+
+void to_index_model(IndexedModel3D* model, Vertex3D* verts, IndexData* indices, int num_pos, int num_texcoord, int num_normal, int num_indices)
+{
+	int max = num_indices;
+
+	Vertex3D* new_vertices = (Vertex3D*)malloc(max * sizeof(Vertex3D));
+	u16* new_indices = (u16*)malloc(num_indices * sizeof(u16));
+
+	for (int i = 0; i < num_indices; ++i) {
+		int pos_index = indices[i].vertex;
+		int normal_index = indices[i].normal;
+		int tcoord_index = indices[i].texcoord;
+
+		new_vertices[i].pos[0] = verts[pos_index].pos[0];
+		new_vertices[i].pos[1] = verts[pos_index].pos[1]; 
+		new_vertices[i].pos[2] = verts[pos_index].pos[2];
+
+		new_vertices[i].tex[0] = verts[tcoord_index].tex[0];
+		new_vertices[i].tex[1] = verts[tcoord_index].tex[1];
+
+		new_vertices[i].normal[0] = verts[normal_index].normal[0];
+		new_vertices[i].normal[1] = verts[normal_index].normal[1];
+		new_vertices[i].normal[2] = verts[normal_index].normal[2];
+
+		new_indices[i] = i;
+	}
+
+	model->indices = new_indices;
+	model->vertices = new_vertices;
+	model->num_indices = num_indices;
+	model->num_vertices = max;
+
+	free(verts);
+	free(indices);
 }

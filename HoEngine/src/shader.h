@@ -17,7 +17,7 @@ internal const char vert_shader[] =
 "uv = tex_coord;\n"
 "vec3 world_pos = (model_matrix * vec4(pos_coord, 1.0)).xyz;\n"
 "normals = vec3(model_matrix * vec4(normal_coord, 0.0));\n"
-"tolight = vec3(5.0, 5.0, 5.0) - world_pos;\n"
+"tolight = vec3(30.0, 30.0, 30.0) - world_pos;\n"
 
 "gl_Position = persp_matrix * view_matrix * model_matrix * vec4(pos_coord, 1.0);\n"
 "}\n";
