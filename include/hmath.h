@@ -113,6 +113,11 @@ struct vec3 {
 		return result;
 	}
 
+	bool operator==(const vec3& r) {
+		if (x == r.x && y == r.y && z == r.z) return true;
+		return false;
+	}
+
 	static inline vec3 cross(vec3 l, vec3 r) {
 		vec3 result;
 		result.x = l.y * r.z - l.z * r.y;
@@ -134,6 +139,14 @@ static vec3 operator*(vec3& l, float r) {
 	result.x = r * l.x;
 	result.y = r * l.y;
 	result.z = r * l.z;
+	return result;
+}
+
+static vec3 operator/(vec3& l, float r) {
+	vec3 result;
+	result.x = l.x / r;
+	result.y = l.y / r;
+	result.z = l.z / r;
 	return result;
 }
 
@@ -271,6 +284,14 @@ struct mat4 {
 		result.m[0][3] = vec.x;
 		result.m[1][3] = vec.y;
 		result.m[2][3] = vec.z;
+		return result;
+	}
+	static inline mat4 scale(float amt) {
+		mat4 result;
+		result.m[0][0] = amt;
+		result.m[1][1] = amt;
+		result.m[2][2] = amt;
+		result.m[3][3] = 1;
 		return result;
 	}
 

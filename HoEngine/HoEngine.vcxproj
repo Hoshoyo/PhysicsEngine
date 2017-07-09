@@ -141,6 +141,7 @@
     <ClInclude Include="src\common.h" />
     <ClInclude Include="src\ho_gl.h" />
     <ClInclude Include="src\input.h" />
+    <ClInclude Include="src\quaternion.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>

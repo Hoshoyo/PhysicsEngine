@@ -2,6 +2,7 @@
 #include "ho_gl.h"
 #include "hmath.h"
 #include "shader.h"
+#include "quaternion.h"
 #include <hphysics.h>
 
 struct Vertex3D {
@@ -24,15 +25,18 @@ struct IndexedModel3D {
 	bool is_colliding;
 
 	vec3 position;
-	vec3 rotation;
+	vec3 last_pos;
+	Quaternion rotation = Quaternion(0,0,0,1);
+	float scale;
 	mat4 model_matrix;
 
 	BoundingShape bshape;
 	BoundingShape bshape_temp;
+
+	vec3 velocity = vec3(0.0f, 0.0f, 0.0f);
+	float time = 0.0f;
 };
 
 void init_application();
 
 void update_and_render();
-
-void DEBUG_app(IndexedModel3D* m1, IndexedModel3D* m2);
