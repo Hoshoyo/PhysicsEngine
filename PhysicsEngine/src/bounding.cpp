@@ -13,7 +13,7 @@ bool collides(BoundingShape* b1, BoundingShape* b2)
 	return false;
 }
 
-bool gjk_collides(BoundingShape* b1, BoundingShape* b2);
+bool gjk_collides(BoundingShape* b1, BoundingShape* b2, CollisionInfo* info);
 vec3 gjk_support(BoundingShape* b1, BoundingShape* b2, vec3 direction);
 
 void DEBUG_gjk()
@@ -356,11 +356,6 @@ bool gjk_collides(BoundingShape* b1, BoundingShape* b2, CollisionInfo* info)
 		support_list.add(a);
 		if (gjk_simplex(opposite_direction)) {
 			if (support_list.current_index == 4) {
-				vec3 white = vec3(1, 1, 1);
-				vec3 black = vec3(0, 0, 0);
-
-				render_fac(support_list.first[1], support_list.first[2], support_list.first[3], white);
-				render_fac(support_list.second[1], support_list.second[2], support_list.second[3], black);
 				if (info) {
 					info->face_shape1[0] = support_list.first[1];
 					info->face_shape1[1] = support_list.first[2];
@@ -390,12 +385,4 @@ void uncollide(vec3 direction, vec3* position, Quaternion* rotation, float _scal
 		is_colliding = gjk_collides(b1, b2, 0);
 		*position = pos;
 	} while (is_colliding);
-}
-
-vec3 calculate_center_of_mass(BoundingShape* b)
-{
-	int n = b->num_vertices;
-	float y = b->vertices[4].y / 2.0f;
-
-	return vec3(0, y, 0);
 }

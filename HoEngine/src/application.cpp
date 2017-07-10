@@ -11,13 +11,12 @@ struct GameState {
 	Camera camera;
 	GLuint shader;
 
-	//IndexedModel3D indexed_object1;
-	//IndexedModel3D indexed_object2;
-	//IndexedModel3D indexed_object3;
-
-	IndexedModel3D models[3];
+	IndexedModel3D* models;
+	int num_models;
 
 	bool start_simulation = false;
+	bool move_objects = false;
+	bool wireframe = false;
 };
 
 static GameState ggs = {};
@@ -127,16 +126,30 @@ void init_application()
 	ggs.camera.set_cam_position(vec3(5.0f, 30.0f, 60.0f));
 	ggs.shader = load_shader(vert_shader, frag_shader, sizeof(vert_shader) - 1, sizeof(frag_shader) - 1);
 
-
 	// Models
-	load_model("res/esfera_10.obj", &ggs.models[0]);
+	ggs.models = (IndexedModel3D*)malloc(sizeof(IndexedModel3D) * 3);
+
+	load_model("res/cube.obj", &ggs.models[0]);
 	init_object(&ggs.models[0]);
 	ggs.models[0].position = vec3(0.0f, 45.0f, 0.0f);
 	ggs.models[0].scale = 0.3f;
+	ggs.models[0].simulating = true;
+	ggs.models[0].static_object = false;
 
 	load_model("res/cube.obj", &ggs.models[1]);
 	init_object(&ggs.models[1]);
-	ggs.models[1].scale = 0.3f;
+	ggs.models[1].scale = 1.0f;
+	ggs.models[1].simulating = false;
+	ggs.models[1].static_object = true;
+
+	load_model("res/esfera_10.obj", &ggs.models[2]);
+	init_object(&ggs.models[2]);
+	ggs.models[2].position = vec3(-15.0f, 45.0f, 0.0f);
+	ggs.models[2].scale = 0.3f;
+	ggs.models[2].simulating = true;
+	ggs.models[2].static_object = false;
+
+	ggs.num_models = 3;
 
 	// opengl
 	glClearColor(0.5f, 0.5f, 0.6f, 1.0f);
@@ -164,122 +177,178 @@ void render_object(IndexedModel3D* model) {
 	else {
 		glUniform4fv(glGetUniformLocation(ggs.shader, "vertex_color"), 1, (float*)&green);
 	}
-
-	glDrawElements(GL_TRIANGLES, model->num_indices, GL_UNSIGNED_SHORT, 0);
+	u32 render_form = GL_TRIANGLES;
+	if (ggs.wireframe) render_form = GL_LINES;
+	glDrawElements(render_form, model->num_indices, GL_UNSIGNED_SHORT, 0);
 }
 
-//static Quaternion totalq(0, 0, 0, 1);
 void input()
 {
-	vec3 last_pos = ggs.models[0].position;
-	float velocity = 0.1f;
-	bool collision = true;
-	if (keyboard_state.key[VK_CONTROL]) {
-		collision = false;
-	}
+	float velocity = 0.5f;
+	float rot_velocity = 3.0f;
+	
 	if (keyboard_state.key[VK_SHIFT]) {
 		velocity = 0.005f;
+		rot_velocity = -3.0f;
 	}
 	if (keyboard_state.key[VK_LEFT]) {
+		ggs.models[0].last_pos.x = ggs.models[0].position.x;
 		ggs.models[0].position.x -= velocity;
 	}
 	if (keyboard_state.key[VK_RIGHT]) {
+		ggs.models[0].last_pos.x = ggs.models[0].position.x;
 		ggs.models[0].position.x += velocity;
 	}
 	if (keyboard_state.key[VK_UP]) {
+		ggs.models[0].last_pos.y = ggs.models[0].position.y;
 		ggs.models[0].position.y += velocity;
 	}
 	if (keyboard_state.key[VK_DOWN]) {
+		ggs.models[0].last_pos.y = ggs.models[0].position.y;
 		ggs.models[0].position.y -= velocity;
 	}
 
 	if (keyboard_state.key['X']) {
-		Quaternion local2 = QuatFromAxisAngle(vec3(1, 0, 0), 0.5f);
+		Quaternion local2 = QuatFromAxisAngle(vec3(1, 0, 0), rot_velocity);
 		ggs.models[0].rotation = local2 * ggs.models[0].rotation;
 	}
 
 	if (keyboard_state.key['Y']) {
-		Quaternion local2 = QuatFromAxisAngle(vec3(0, 1, 0), 0.5f);
+		Quaternion local2 = QuatFromAxisAngle(vec3(0, 1, 0), rot_velocity);
 		ggs.models[0].rotation = local2 * ggs.models[0].rotation;
 	}
 
 	if (keyboard_state.key['Z']) {
-		Quaternion local2 = QuatFromAxisAngle(vec3(0, 0, 1), 0.5f);
+		Quaternion local2 = QuatFromAxisAngle(vec3(0, 0, 1), rot_velocity);
 		ggs.models[0].rotation = local2 * ggs.models[0].rotation;
 	}
-	mat4 rot = RotFromQuat(ggs.models[0].rotation);
+	vec3 rot_vec = vec3(ggs.models[0].rotation.x, ggs.models[0].rotation.y, ggs.models[0].rotation.z);
+	rot_vec = vec3::normalize(rot_vec) * 20.0f;
+	render_vec(rot_vec, ggs.models[0].position);
+	//render_vec(ggs.models[0].position, rot_vec);
 
-	vec3 pos = ggs.models[0].position;
-	mat4 rotation_matrix = rot;
-	mat4 scale_matrix = mat4::scale(ggs.models[0].scale);
-	mat4 final_matrix = mat4::translate(pos) * rotation_matrix * scale_matrix;
 
-	transform_shape(&ggs.models[0].bshape, &ggs.models[0].bshape_temp, final_matrix);
-	ggs.models[1].is_colliding = gjk_collides(&ggs.models[0].bshape_temp, &ggs.models[1].bshape_temp, 0);
-	ggs.models[0].is_colliding = ggs.models[1].is_colliding;
-
-	if (!ggs.models[0].is_colliding || !collision) {
-		ggs.models[0].model_matrix = final_matrix;
-	} else {
-		ggs.models[0].position = last_pos;
-		ggs.models[0].rotation = ggs.models[0].rotation;
+	if (keyboard_state.key_event['H']) {
+		ggs.start_simulation = !ggs.start_simulation;
+		keyboard_state.key_event['H'] = false;
+	}
+	if (keyboard_state.key_event['M']) {
+		ggs.move_objects = !ggs.move_objects;
+		keyboard_state.key_event['M'] = false;
+	}
+	if (keyboard_state.key_event['I']) {
+		ggs.wireframe = !ggs.wireframe;
+		keyboard_state.key_event['I'] = false;
 	}
 }
 
-
-
 void update(IndexedModel3D* im) {
-	const float mass = 10.0f;
+	if (ggs.move_objects) return;
 	static vec3 acceleration = vec3(0.0f, -10.0f, 0.0f);
 
 	const float time_step = 1.0f / 250.0f;
-	
 	im->time += time_step;
-
 	im->velocity = acceleration * im->time + im->velocity;
-
 	im->position = im->velocity * im->time + im->position;
 }
 
+void update_model(IndexedModel3D* im) 
+{
+	bool colliding = false;
+
+	vec3 last_pos = im->position;
+	mat4 rot = RotFromQuat(im->rotation);
+
+	vec3 pos = im->position;
+	mat4 rotation_matrix = rot;
+	mat4 scale_matrix = mat4::scale(im->scale);
+	mat4 final_matrix = mat4::translate(pos) * rotation_matrix * scale_matrix;
+
+	transform_shape(&im->bshape, &im->bshape_temp, final_matrix);
+
+	if (im->simulating) {
+		for (int i = 0; i < ggs.num_models; ++i) {
+			if (ggs.models + i == im) continue;
+
+			colliding = gjk_collides(&im->bshape_temp, &ggs.models[i].bshape_temp, 0);
+			ggs.models[i].is_colliding = colliding;
+			if (colliding) {
+				im->colliding_with_index = i;
+				im->is_colliding = true;
+				ggs.models[i].is_colliding = true;
+				break;
+			} else {
+				im->colliding_with_index = -1;
+			}
+		}
+	}
+	im->is_colliding = colliding;
+	im->model_matrix = final_matrix;
+}
 
 void update_and_render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(ggs.shader);
-
-	if (ggs.start_simulation && !ggs.models[0].is_colliding) {
-		ggs.models[0].last_pos = ggs.models[0].position;
-		update(&ggs.models[0]);
-	} else {
-		vec3 pos = ggs.models[0].position;
-		vec3 direction = ggs.models[0].last_pos - pos;
-		if (ggs.models[0].is_colliding) {
-			uncollide(direction,
-				&ggs.models[0].position,
-				&ggs.models[0].rotation,
-				ggs.models[0].scale,
-				&ggs.models[0].bshape_temp,
-				&ggs.models[1].bshape_temp,
-				&ggs.models[0].bshape);
-			ggs.models[0].is_colliding = false;
-			ggs.models[1].is_colliding = false;
-		}
-
-		ggs.models[0].velocity = vec3(0, 0, 0);
-		ggs.start_simulation = false;
-		ggs.models[0].time = 0.0f;
-	}
-	if (keyboard_state.key_event['H']) {
-		ggs.start_simulation = true;
-		keyboard_state.key_event['H'] = false;
-	}
 	
 	input_camera(&ggs.camera);
 	input();
 
-	render_object(&ggs.models[0]);
-	render_object(&ggs.models[1]);
+	bool resolve_collision = false;
+	int collision_responsible = 0;
+	for (int i = 0; i < ggs.num_models; ++i) {
+		update_model(ggs.models + i);
+		render_object(ggs.models + i);
+		if (ggs.models[i].is_colliding) {
+			resolve_collision = true;
+			collision_responsible = i;
+		}
+	}
+	if (ggs.start_simulation && !resolve_collision) {
+		int num_simulating = 0;
+		for (int i = 0; i < ggs.num_models; ++i) {
+			if (!ggs.models[i].simulating) continue;
+			ggs.models[i].last_pos = ggs.models[i].position;
+			update(&ggs.models[i]);
+			num_simulating++;
+		}
+		if (num_simulating == 0) {
+			for (int i = 0; i < ggs.num_models; ++i) {
+				if (!ggs.models[i].static_object) ggs.models[i].simulating = true;
+			}
+			ggs.start_simulation = false;
+		}
+	} else {
+		if (!ggs.move_objects) {
+			if (resolve_collision) {
+				int x = 0;
+			}
+			for (int i = 0; i < ggs.num_models; ++i) {
+				if (!ggs.models[i].simulating) continue;
+				if (collision_responsible != i && ggs.start_simulation) continue;
+
+				int coll_index = ggs.models[i].colliding_with_index;
+				coll_index = (coll_index < 0) ? 0 : coll_index;
+				vec3 pos = ggs.models[i].position;
+				vec3 direction = ggs.models[i].last_pos - pos;
+				if (ggs.models[i].is_colliding) {
+					uncollide(direction,
+						&ggs.models[i].position,
+						&ggs.models[i].rotation,
+						ggs.models[i].scale,
+						&ggs.models[i].bshape_temp,
+						&ggs.models[coll_index].bshape_temp,
+						&ggs.models[i].bshape);
+					ggs.models[i].is_colliding = false;
+					ggs.models[coll_index].is_colliding = false;
+					ggs.models[i].simulating = false;
+				}
+				ggs.models[i].velocity = vec3(0, 0, 0);
+				ggs.models[i].time = 0.0f;
+			}
+		}
+	}
 
 	glUseProgram(0);
 }
