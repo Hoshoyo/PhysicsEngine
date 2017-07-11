@@ -5,16 +5,54 @@
 #include "util.h"
 #include "hmath.h"
 #include "application.h"
+#include "WindowApi\Window.h"
+#include "chat.h"
+#include <stdlib.h>
+#include <time.h>
+#include "debug_table.h"
+
+DebugTable debug_table;
 
 Window_State win_state;
 
 Keyboard_State keyboard_state = { 0 };
 Mouse_State mouse_state = { 0 };
+Chat* g_chat = 0;
 
 LRESULT CALLBACK WndProc(HWND window, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	switch (msg)
 	{
+	case WM_MOUSEMOVE: {
+		int width = win_state.win_width;
+		int height = win_state.win_height;
+		int x = GET_X_LPARAM(lparam);
+		int y = GET_Y_LPARAM(lparam);
+
+		const float aspect = (float)width / height;
+		float screenX = ((float)x * 2 / width - 1.0f);
+		float screenY = -((float)y * 2 / height - 1.0f);
+
+		mouse_state.x = x;
+		mouse_state.y = y;
+	}break;
+	case WM_LBUTTONDOWN: {
+		int width = win_state.win_width;
+		int height = win_state.win_height;
+
+		const float aspect = (float)width / height;
+		float screenX = ((float)mouse_state.x * 2 / width - 1.0f);
+		float screenY = -((float)mouse_state.x * 2 / height - 1.0f);
+
+		for (unsigned int i = 0; i < linked::Window::openedWindows.size(); i++)
+			linked::Window::openedWindows[i]->mouseCallback(0, 1, 0);
+		linked::Button::mouseCallback(0, 1, 0);
+	}break;
+	case WM_LBUTTONUP: {
+		for (unsigned int i = 0; i < linked::Window::openedWindows.size(); i++)
+			linked::Window::openedWindows[i]->mouseCallback(0, 0, 0);
+		linked::Button::mouseCallback(0, 0, 0);
+	}break;
 	case WM_KILLFOCUS: {
 		ZeroMemory(keyboard_state.key, MAX_KEYS);
 	}break;
@@ -27,6 +65,9 @@ LRESULT CALLBACK WndProc(HWND window, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_SYSKEYUP:
 		break;
 	case WM_CHAR:
+		if (g_chat) {
+			g_chat->handle_keystroke(wparam, lparam);
+		}
 		break;
 	case WM_SIZE: {
 		RECT r;
@@ -42,6 +83,7 @@ LRESULT CALLBACK WndProc(HWND window, UINT msg, WPARAM wparam, LPARAM lparam)
 		POINT mouse_loc;
 		DragQueryPoint(hDrop, &mouse_loc);
 		DragFinish(hDrop);
+		create_object(buffer);
 	}break;
 	default:
 		return DefWindowProc(window, msg, wparam, lparam);
@@ -104,7 +146,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
 
 	init_application();
 
-	wglSwapIntervalEXT(1);		// Enable Vsync
+	wglSwapIntervalEXT_(1);		// Enable Vsync
 
 	bool running = true;
 	MSG msg;
@@ -115,6 +157,32 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
 	mouse_event.dwFlags = TME_LEAVE;
 	mouse_event.dwHoverTime = HOVER_DEFAULT;
 	mouse_event.hwndTrack = win_state.window_handle;
+
+	linked::Window::linkedWindowInit();
+
+	using namespace linked;
+	Chat chat;
+	linked::Window* chat_window = chat.init_chat();
+	g_chat = &chat;
+
+	ParticleEmitter emitter(hm::vec3(10,10,10), 1.0f / 60.0f, 20, 2.0f);
+	
+	debug_table.create_entry("emitter_average_life", &emitter.average_life, TYPE_R32);
+	debug_table.create_entry("emitter_particles_ps", &emitter.particles_ps, TYPE_R32);
+	debug_table.create_entry("emitter_position_x", &emitter.emitter_pos.x, TYPE_R32);
+	debug_table.create_entry("emitter_position_y", &emitter.emitter_pos.y, TYPE_R32);
+	debug_table.create_entry("emitter_position_z", &emitter.emitter_pos.z, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_x", &emitter.velocity.x, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_y", &emitter.velocity.y, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_z", &emitter.velocity.z, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_variation_x", &emitter.velocity_variation.x, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_variation_y", &emitter.velocity_variation.y, TYPE_R32);
+	debug_table.create_entry("emitter_velocity_variation_z", &emitter.velocity_variation.z, TYPE_R32);
+	debug_table.create_entry("emitter_gravity_x", &emitter.gravity.x, TYPE_R32);
+	debug_table.create_entry("emitter_gravity_y", &emitter.gravity.y, TYPE_R32);
+	debug_table.create_entry("emitter_gravity_z", &emitter.gravity.z, TYPE_R32);
+
+	srand(time(0));
 
 	while (running) {
 		TrackMouseEvent(&mouse_event);
@@ -133,6 +201,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
 				size_t key = msg.wParam;
 				keyboard_state.key[key] = false;
 				keyboard_state.key_event[key] = true;
+				if (keyboard_state.key_event[VK_UP] && g_chat->m_enabled) {
+					keyboard_state.key_event[VK_UP] = false;
+					g_chat->next_history();
+				}
+				if (keyboard_state.key_event[VK_DOWN] && g_chat->m_enabled) {
+					keyboard_state.key_event[VK_DOWN] = false;
+					g_chat->previous_history();
+				}
 			} break;
 			case WM_MOUSEMOVE: {
 				mouse_state.x = GET_X_LPARAM(msg.lParam);
@@ -158,10 +234,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+
+		win_state.move_camera = !chat_window->isAttached();
+		win_state.do_input = !chat.m_enabled;
+
+		emitter.emitt();
+
 		update_and_render();
+		emitter.update();
+		emitter.render(render_object_default);
+
+		chat.update();
+		linked::Window::updateWindows();
+		linked::Window::renderWindows();
 
 		SwapBuffers(win_state.device_context);
 	}
+	linked::Window::linkedWindowDestroy();
 #ifdef DEBUG
 	FreeConsole();
 #endif

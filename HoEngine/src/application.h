@@ -11,6 +11,8 @@ struct Vertex3D {
 	float tex[2];
 };
 
+struct Texture;
+
 struct IndexedModel3D {
 	GLuint vao;
 	GLuint vbo;
@@ -40,9 +42,11 @@ struct IndexedModel3D {
 	bool static_object = false;
 	vec3 velocity = vec3(0.0f, 0.0f, 0.0f);
 	float time = 0.0f;
-	float mass;
+	Texture* texture;
 };
 
 void init_application();
 
 void update_and_render();
+void render_object_default(hm::vec3 position, float scale);
+void create_object(char* filename);

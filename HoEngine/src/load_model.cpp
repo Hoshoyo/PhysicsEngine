@@ -9,7 +9,7 @@ struct Token {
 	};
 };
 
-internal bool str_equal(const char* str1, int str1_size, const char* str2, int str2_size)
+static bool str_equal(const char* str1, int str1_size, const char* str2, int str2_size)
 {
 	if (str1_size == str2_size) {
 		for (int i = 0; i < str1_size; ++i) {

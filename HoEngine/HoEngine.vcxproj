@@ -90,14 +90,14 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)PhysicsEngine\include;$(SolutionDir)include;</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DEBUG</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUG;GLEW_STATIC</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExpandAttributedSource>false</ExpandAttributedSource>
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)PhysicsEngine\bin\$(Platform)\$(Configuration);lib;bin\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;shell32.lib;opengl32.lib;PhysicsEngine.lib</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;shell32.lib;opengl32.lib;PhysicsEngine.lib;freetyped.lib;glew64d.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,17 +133,64 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
+    <ClCompile Include="src\chat.cpp" />
+    <ClCompile Include="src\debug_table.cpp" />
+    <ClCompile Include="src\freetypegl\platform.c" />
+    <ClCompile Include="src\freetypegl\texture-atlas.c" />
+    <ClCompile Include="src\freetypegl\texture-font.c" />
+    <ClCompile Include="src\freetypegl\vector.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Parser\lexer.cpp" />
+    <ClCompile Include="src\Parser\parser.cpp" />
+    <ClCompile Include="src\ResourceLoad\ImageLoader.cpp" />
+    <ClCompile Include="src\ResourceLoad\Texture.cpp" />
     <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\WindowApi\Button.cpp" />
+    <ClCompile Include="src\WindowApi\FontRenderer.cpp" />
+    <ClCompile Include="src\WindowApi\FontShader.cpp" />
+    <ClCompile Include="src\WindowApi\IndexedModel.cpp" />
+    <ClCompile Include="src\WindowApi\Label.cpp" />
+    <ClCompile Include="src\WindowApi\Mesh.cpp" />
+    <ClCompile Include="src\WindowApi\Primitive.cpp" />
+    <ClCompile Include="src\WindowApi\Shader.cpp" />
+    <ClCompile Include="src\WindowApi\Window.cpp" />
+    <ClCompile Include="src\WindowApi\WindowDiv.cpp" />
+    <ClCompile Include="src\WindowApi\WindowShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.h" />
+    <ClInclude Include="src\chat.h" />
     <ClInclude Include="src\common.h" />
+    <ClInclude Include="src\debug_table.h" />
+    <ClInclude Include="src\freetypegl\freetype-gl.h" />
+    <ClInclude Include="src\freetypegl\opengl.h" />
+    <ClInclude Include="src\freetypegl\platform.h" />
+    <ClInclude Include="src\freetypegl\stb_image.h" />
+    <ClInclude Include="src\freetypegl\texture-atlas.h" />
+    <ClInclude Include="src\freetypegl\texture-font.h" />
+    <ClInclude Include="src\freetypegl\vec234.h" />
+    <ClInclude Include="src\freetypegl\vector.h" />
     <ClInclude Include="src\ho_gl.h" />
     <ClInclude Include="src\input.h" />
+    <ClInclude Include="src\Parser\interp.h" />
+    <ClInclude Include="src\Parser\lexer.h" />
+    <ClInclude Include="src\Parser\parser.h" />
     <ClInclude Include="src\quaternion.h" />
+    <ClInclude Include="src\ResourceLoad\ImageLoader.h" />
+    <ClInclude Include="src\ResourceLoad\Texture.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\WindowApi\Button.h" />
+    <ClInclude Include="src\WindowApi\FontRenderer.h" />
+    <ClInclude Include="src\WindowApi\FontShader.h" />
+    <ClInclude Include="src\WindowApi\IndexedModel.h" />
+    <ClInclude Include="src\WindowApi\Label.h" />
+    <ClInclude Include="src\WindowApi\Mesh.h" />
+    <ClInclude Include="src\WindowApi\Primitive.h" />
+    <ClInclude Include="src\WindowApi\Shader.h" />
+    <ClInclude Include="src\WindowApi\Window.h" />
+    <ClInclude Include="src\WindowApi\WindowDiv.h" />
+    <ClInclude Include="src\WindowApi\WindowShader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

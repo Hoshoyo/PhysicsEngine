@@ -2,8 +2,9 @@
 #define HOHEX_HOGL_H
 #include "common.h"
 
-#include <GL/gl.h>
-
+//#include <GL/gl.h>
+#include <GL/glew.h>
+#if 0
 typedef char GLchar;
 typedef int GLint;
 typedef float GLfloat;
@@ -63,11 +64,9 @@ typedef int* GLintptr;
 #define GL_TEXTURE29 0x84DD
 #define GL_TEXTURE30 0x84DE
 #define GL_TEXTURE31 0x84DF
+#define GL_TEXTURE_LOD_BIAS	0x8501
 
-#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
-#define WGL_CONTEXT_FLAGS_ARB                   0x2094
-
+#endif
 #define HOGL_API extern "C"
 #ifndef HOGL_IMPLEMENT
 #define HOGL_END_API
@@ -75,9 +74,14 @@ typedef int* GLintptr;
 #define HOGL_END_API = 0
 #endif
 
-HOGL_API bool(__stdcall* wglSwapIntervalEXT)(int interval) HOGL_END_API;
-HOGL_API HGLRC(WINAPI* wglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, int *attribList) HOGL_END_API;
+#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
+#define WGL_CONTEXT_FLAGS_ARB                   0x2094
 
+HOGL_API bool(__stdcall* wglSwapIntervalEXT_)(int interval) HOGL_END_API;
+//HOGL_API HGLRC(WINAPI* wglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, int *attribList) HOGL_END_API;
+
+#if 0
 HOGL_API void(__stdcall* glDebugMessageCallbackARB)(void(__stdcall *)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void *), const void*) HOGL_END_API;
 
 HOGL_API GLuint(__stdcall* glCreateProgram)() HOGL_END_API;
@@ -158,16 +162,18 @@ HOGL_API void(__stdcall* glBindVertexArray)(GLuint array) HOGL_END_API;
 HOGL_API void(__stdcall* glDeleteVertexArrays)(GLsizei n, const GLuint* arrays) HOGL_END_API;
 HOGL_API void(__stdcall* glGenVertexArrays)(GLsizei n, GLuint *arrays) HOGL_END_API;
 HOGL_API void(__stdcall* glActiveTexture)(GLenum texture) HOGL_END_API;
+HOGL_API void(__stdcall* glGenerateMipmap)(GLenum target) HOGL_END_API;
 
+#endif
 #ifdef HOGL_IMPLEMENT
 
 #define HOGL_PIXELFORMAT_ERROR 1
 
-internal char* error_codes[] = { 
+static char* error_codes[] = { 
 	"", 
 	"Error creating context pixel descriptor.\n",  
 };
-
+/*
 void init_gl_extensions()
 {
 	wglSwapIntervalEXT = (bool(__stdcall*)(int)) wglGetProcAddress("wglSwapIntervalEXT");
@@ -251,9 +257,11 @@ void init_gl_extensions()
 	glDeleteVertexArrays = (void(__stdcall*)(GLsizei, const GLuint*)) wglGetProcAddress("glDeleteVertexArrays");
 	glGenVertexArrays = (void(__stdcall*)(GLsizei, GLuint *)) wglGetProcAddress("glGenVertexArrays");
 	glActiveTexture = (void(__stdcall*)(GLenum texture)) wglGetProcAddress("glActiveTexture");
+	glGenerateMipmap = (void(__stdcall*)(GLenum target)) wglGetProcAddress("glGenerateMipmap");
 
 	glDebugMessageCallbackARB = (void(__stdcall*)(void(__stdcall*)(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *, const void*), const void*)) wglGetProcAddress("glDebugMessageCallbackARB");
 }
+*/
 
 int init_opengl(HWND window_handle, HDC* device_context, HGLRC* rendering_context, int major_ver, int minor_ver)
 {
@@ -277,20 +285,25 @@ int init_opengl(HWND window_handle, HDC* device_context, HGLRC* rendering_contex
 	HGLRC temp_context = wglCreateContext(*device_context);
 	BOOL error = wglMakeCurrent(*device_context, temp_context);
 
-	int attribs[] =
-	{
-		WGL_CONTEXT_MAJOR_VERSION_ARB, major_ver,
-		WGL_CONTEXT_MINOR_VERSION_ARB, minor_ver,
-		WGL_CONTEXT_FLAGS_ARB, 0,
-		0
-	};
-	wglCreateContextAttribsARB = (HGLRC(WINAPI*)(HDC, HGLRC, int *))wglGetProcAddress("wglCreateContextAttribsARB");
-	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(temp_context);
-	*rendering_context = wglCreateContextAttribsARB(*device_context, 0, attribs);
-	wglMakeCurrent(*device_context, *rendering_context);
+	//int attribs[] =
+	//{
+	//	WGL_CONTEXT_MAJOR_VERSION_ARB, major_ver,
+	//	WGL_CONTEXT_MINOR_VERSION_ARB, minor_ver,
+	//	WGL_CONTEXT_FLAGS_ARB, 0,
+	//	0
+	//};
+	//wglCreateContextAttribsARB = (HGLRC(WINAPI*)(HDC, HGLRC, int *))wglGetProcAddress("wglCreateContextAttribsARB");
+	//wglMakeCurrent(NULL, NULL);
+	//wglDeleteContext(temp_context);
+	//*rendering_context = wglCreateContextAttribsARB(*device_context, 0, attribs);
+	//wglMakeCurrent(*device_context, *rendering_context);
 
-	init_gl_extensions();
+	glewExperimental = true;
+	if (glewInit() != GLEW_OK) {
+		exit(-1);
+	}
+	//init_gl_extensions();
+	wglSwapIntervalEXT_ = (bool(__stdcall*)(int)) wglGetProcAddress("wglSwapIntervalEXT");
 
 	return 0;
 }

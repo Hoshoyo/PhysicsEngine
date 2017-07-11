@@ -71,6 +71,7 @@ extern Mouse_State mouse_state;
 
 void mouse_move_event(Camera* camera, int valuex, int valuey)
 {
+	if (!win_state.move_camera) return;
 #define TURNSPEED -0.1f
 
 	float x = (2.0f * valuex) / win_state.win_width - 1;
@@ -85,11 +86,13 @@ void mouse_move_event(Camera* camera, int valuex, int valuey)
 
 void input_camera(Camera* camera)
 {
+	if (!win_state.do_input) return;
 	float CAMSPEED = 65.0f;
-	float CAMTURNSPEED = 9.0f;
+	float CAMTURNSPEED = 30.0f;
 
 	if (keyboard_state.key[VK_SHIFT]) {
-		CAMSPEED = 1.0f;
+		CAMSPEED = 10.0f;
+		CAMTURNSPEED = 6.0f;
 	}
 
 	if (keyboard_state.key['W']) {

@@ -375,7 +375,10 @@ void uncollide(vec3 direction, vec3* position, Quaternion* rotation, float _scal
 {
 	vec3 pos = *position;
 	bool is_colliding = true;
+	int maxit = 1000;
 	do {
+		if (maxit <= 0) break;
+		maxit--;
 		direction = vec3::normalize(direction) / 100.0f;
 		pos = pos + direction;
 		mat4 rotation_matrix = RotFromQuat(*rotation);

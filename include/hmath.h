@@ -4,6 +4,8 @@
 #define DEGTORAD(degree) ((degree) * (3.141592654f / 180.0f))
 #define RADTODEG(radian) ((radian) * (180.0f / 3.141592654f))
 
+namespace hm{
+
 struct vec2 {
 	float x;
 	float y;
@@ -332,6 +334,7 @@ struct mat4 {
 	}
 
 	static inline mat4 look_at(vec3 position, vec3 target, vec3 world_up);
+	static inline mat4 ortho(float left, float right, float top, float bottom);
 };
 
 static vec4 operator*(const mat4& m, const vec4& v) {
@@ -428,6 +431,17 @@ inline mat4 mat4::look_at(vec3 position, vec3 target, vec3 world_up) {
 
 	// Return lookAt matrix as combination of translation and rotation matrix
 	return translation * rotation; // Remember to read from right to left (first translation then rotation)
+}
+
+inline mat4 mat4::ortho(float left, float right, float bottom, float top)
+{
+	mat4 result;
+	result.m[0][0] = 2.0f / (right - left);	result.m[0][1] = 0;						result.m[0][2] = 0;	result.m[0][3] = -(right + left) / (right - left);
+	result.m[1][0] = 0;						result.m[1][1] = 2.0f / (top - bottom);	result.m[1][2] = 0;	result.m[1][3] = -(top + bottom) / (top - bottom);
+	result.m[2][0] = 0;						result.m[2][1] = 0;						result.m[2][2] = 1;	result.m[2][3] = 0;
+	result.m[3][0] = 0;						result.m[3][1] = 0;						result.m[3][2] = 0;	result.m[3][3] = 1;
+
+	return result;
 }
 
 struct quat
@@ -530,3 +544,5 @@ static inline quat quat_from_axis_angle(vec3 axis, float angle)
 
 	return q;
 }
+
+} // namespace hm

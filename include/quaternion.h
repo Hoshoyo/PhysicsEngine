@@ -6,6 +6,8 @@
 #define PI 3.14159265
 #endif
 
+using namespace hm;
+
 inline float ToRadians(float degree)
 {
 	return  degree * (float)PI / 180.0f;

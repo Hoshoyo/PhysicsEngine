@@ -18,12 +18,18 @@
     <ClCompile Include="src\bounding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\particle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\bounding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\hphysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

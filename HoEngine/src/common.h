@@ -10,7 +10,6 @@ typedef unsigned short 		u16;
 typedef unsigned char		u8;
 
 #define null 0
-#define internal static
 
 #define USE_CRT 1
 
@@ -29,6 +28,9 @@ typedef struct {
 	WINDOWPLACEMENT g_wpPrev;
 	HDC device_context;
 	HGLRC rendering_context;
+
+	bool move_camera = true;
+	bool do_input = true;
 } Window_State;
 
 #else

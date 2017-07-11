@@ -354,7 +354,7 @@ bool is_string_equal(u8* str1, u8* str2)
 	return true;
 }
 
-internal double frequency_counter = 0.0;
+static double frequency_counter = 0.0;
 
 void init_timer() {
 	LARGE_INTEGER li;
@@ -368,7 +368,131 @@ double get_time() {
 	return (double)li.QuadPart / frequency_counter;
 }
 
-internal bool str_equal(const char* str1, int str1_size, const char* str2, int str2_size)
+string::string()
+{
+	capacity = 0;
+	length = 0;
+	data = 0;
+}
+
+string::string(s64 capac, size_t strlen, char* str)
+{
+	capacity = capac;
+	length = strlen;
+	data = (char*)malloc(capacity);
+	if (strlen) strncpy(data, str, strlen);
+}
+
+string::~string()
+{
+	capacity = 0;
+	length = 0;
+	if (capacity > 0) free(data);
+	data = 0;
+}
+
+void string::cat(string& r)
+{
+	if (length + r.length >= capacity)
+	{
+		size_t newcap = capacity * 2 + r.length;
+		capacity = newcap;
+		data = (char*)realloc(data, newcap);
+	}
+	memcpy(&data[length], r.data, r.length);
+	length += r.length;
+}
+
+void string::cat(char* str, size_t len)
+{
+	if (length + len >= capacity)
+	{
+		size_t newcap = capacity * 2 + len;
+		capacity = newcap;
+		data = (char*)realloc(data, newcap);
+	}
+	memcpy(&data[length], str, len);
+	length += len;
+}
+
+void string::cat(s64 num)
+{
+	char buffer[128];
+	s64 m = 10;
+	int i = 0;
+	for (; num; ++i)
+	{
+		s64 res = num % m;
+		s64 nres = res / (m / 10);
+		buffer[64 - i] = nres + 0x30;
+		num -= res;
+		m *= 10;
+	}
+	int len = 64 - i;
+
+	if (length + len >= capacity)
+	{
+		size_t newcap = capacity * 2 + len;
+		capacity = newcap;
+		data = (char*)realloc(data, newcap);
+	}
+	memcpy(&data[length], buffer, len);
+	length += len;
+}
+
+bool string::is_mutable()
+{
+	if (capacity == -1) return false;
+	return true;
+}
+
+
+string make_new_string(s64 capacity)
+{
+	string res;
+	res.capacity = capacity;
+	res.length = 0;
+	res.data = (char*)malloc(res.capacity);
+	return res;
+}
+
+string make_new_string(const char* val)
+{
+	string res;
+	size_t len = strlen(val);
+	res.capacity = len + 1;
+	res.length = len;
+	if (len) {
+		res.data = (char*)malloc(res.capacity);
+		strncpy(res.data, val, len);
+	}
+	return res;
+}
+
+void make_immutable_string(string& s, const char* val, s64 length)
+{
+	s.capacity = -1;
+	// yes i dont give a damn I say when it is or it is'nt const
+	s.data = (char*)val;
+	s.length = length;
+}
+
+void make_immutable_string(string& s, const char* val)
+{
+	s.capacity = -1;
+	// yes i dont give a damn I say when it is or it is'nt const
+	s.data = (char*)val;
+	s.length = strlen(val);
+}
+
+void make_immutable_string(string& dest, string& src)
+{
+	dest.capacity = -1;
+	dest.data = src.data;
+	dest.length = src.length;
+}
+
+bool str_equal(const char* str1, int str1_size, const char* str2, int str2_size)
 {
 	if (str1_size == str2_size) {
 		for (int i = 0; i < str1_size; ++i) {

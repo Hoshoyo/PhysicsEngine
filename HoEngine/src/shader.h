@@ -1,7 +1,7 @@
 #pragma once
 #include "util.h"
 
-internal const char vert_shader[] =
+static const char vert_shader[] =
 "#version 330\n"
 "layout(location=0) in vec3 pos_coord;\n"
 "layout(location=1) in vec3 normal_coord;\n"
@@ -22,7 +22,7 @@ internal const char vert_shader[] =
 "gl_Position = persp_matrix * view_matrix * model_matrix * vec4(pos_coord, 1.0);\n"
 "}\n";
 
-internal const char frag_shader[] =
+static  const char frag_shader[] =
 "#version 330\n"
 "out vec4 color;\n"
 "in vec2 uv;\n"
@@ -30,16 +30,20 @@ internal const char frag_shader[] =
 "in vec3 tolight;\n"
 "uniform sampler2D tex_sampler;\n"
 "uniform vec4 vertex_color;\n"
+"uniform bool is_colliding;\n"
 "void main(){\n"
-"color = vec4(normalize(normals), 1.0);\n"
+"color = texture(tex_sampler, uv);\n"
 "float factor = dot(normalize(normals), normalize(tolight));\n"
 "vec3 diffuse = max(factor * vec3(1.0, 1.0, 1.0), 0.2);\n"
 
 "//color = vec4(normalize(normals), 1.0);\n"
-"color = vertex_color * vec4(diffuse, 1.0);\n"
+"color = color * vec4(diffuse, 1.0);\n"
+	"if(is_colliding){\n"
+	"color = color * vertex_color;\n"
+	"}\n"
 "}\n";
 
-internal GLuint load_shader(const char* vert_shader, const char* frag_shader, GLint vert_length, GLint frag_length)
+static GLuint load_shader(const char* vert_shader, const char* frag_shader, GLint vert_length, GLint frag_length)
 {
 	GLuint vs_id = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fs_id = glCreateShader(GL_FRAGMENT_SHADER);
